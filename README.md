@@ -4,6 +4,20 @@ A calendar heatmap + sliding weekly chart for TSA passenger volumes since 2019-0
 
 Built with SvelteKit + TypeScript. No charting library — every pixel is hand-drawn SVG so the aesthetic stays cohesive end to end.
 
+## Screens
+
+Calendar (`/`) — first viewport on a 1440×900 laptop:
+
+![Calendar](docs/media/calendar-laptop.png)
+
+Weekly view (`/week`):
+
+![Week](docs/media/week-laptop.png)
+
+Scrolling the weekly view (arrow keys + shift for single-day scrub, plain arrows for window-sized jumps; drag and horizontal-wheel work too):
+
+![Week — scrolling](docs/media/week-scroll.gif)
+
 ## Run locally
 
 ```bash
@@ -55,13 +69,3 @@ TSA is behind Akamai and blocks vanilla HTTP clients, so the refresh script driv
 - `shift ← →` — single day
 - `Home` / `End` — first / latest day
 - `Esc` — back to calendar
-
-## Design notes
-
-Aesthetic: _Departures board after midnight_. Deep navy background, warm amber `#FFB000`, cream paper-tone text. Type stack:
-
-- **Major Mono Display** — title only, mechanical character
-- **IBM Plex Mono** — labels, axes, tabular numbers
-- **Fraunces** — body text (variable, opsz + SOFT)
-
-The heatmap ramp stays in one perceptual hue family so the calendar reads as continuous with the brand color rather than a generic rainbow.
