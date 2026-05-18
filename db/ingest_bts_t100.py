@@ -52,7 +52,7 @@ def to_int(v: str) -> int:
         return 0
 
 
-def ingest_zip(conn: sqlite3.Connection, zip_path: Path, dataset_key: str, run_id: int) -> int:
+def ingest_zip(conn: sqlite3.Connection, zip_path: Path, run_id: int) -> int:
     with zipfile.ZipFile(zip_path) as zf:
         csv_name = next(n for n in zf.namelist() if n.upper().endswith('.CSV') and 'DOCUMENTATION' not in n.upper())
         with zf.open(csv_name) as f:
@@ -67,14 +67,14 @@ def ingest_zip(conn: sqlite3.Connection, zip_path: Path, dataset_key: str, run_i
             def flush():
                 if not batch: return
                 conn.executemany('''INSERT INTO t100_segment(
-                    year, month, dataset, unique_carrier, carrier_region,
+                    year, month, unique_carrier, carrier_region,
                     origin_iata, origin_airport_id, origin_airport_seq_id,
                     dest_iata, dest_airport_id, dest_airport_seq_id,
                     aircraft_group, aircraft_type, aircraft_config, service_class,
                     passengers, seats, dep_scheduled, dep_performed,
                     freight_lb, mail_lb, distance_mi, air_time_min, ramp_time_min,
                     ingest_run_id
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', batch)
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', batch)
                 batch.clear()
 
             for row in reader:
@@ -120,7 +120,7 @@ def ingest_zip(conn: sqlite3.Connection, zip_path: Path, dataset_key: str, run_i
                     airports_seen.add(iata)
 
                 batch.append((
-                    to_int(row['YEAR']), to_int(row['MONTH']), dataset_key,
+                    to_int(row['YEAR']), to_int(row['MONTH']),
                     uc, row['REGION'] or '',
                     row['ORIGIN'], to_int(row['ORIGIN_AIRPORT_ID']), to_int(row['ORIGIN_AIRPORT_SEQ_ID']),
                     row['DEST'], to_int(row['DEST_AIRPORT_ID']), to_int(row['DEST_AIRPORT_SEQ_ID']),
@@ -146,29 +146,18 @@ def main():
     conn.execute('PRAGMA synchronous=NORMAL')
 
     total = 0
-    zips = sorted(CACHE.glob('*.zip'))
+    zips = sorted(CACHE.glob('t100_domestic_*.zip'))
     for zp in zips:
-        # Filename like 't100_domestic_2019.zip' or 't100_international_2019.zip'
-        stem = zp.stem
-        if stem.startswith('t100_domestic'):
-            dataset = 't100_domestic'
-            source = 'bts_t100_domestic'
-        elif stem.startswith('t100_international'):
-            dataset = 't100_international'
-            source = 'bts_t100_international'
-        else:
-            print(f'  skip unknown: {zp.name}', file=sys.stderr)
-            continue
-        year = stem.rsplit('_', 1)[-1]
+        year = zp.stem.rsplit('_', 1)[-1]
 
         cur = conn.execute('''INSERT INTO ingest_run(source, fetched_at, source_url, source_filename, row_count, covers_from, covers_to, notes)
-                              VALUES (?, datetime('now'), 'https://transtats.bts.gov/DL_SelectFields.aspx', ?, 0, ?, ?, NULL)''',
-                           (source, zp.name, f'{year}-01-01', f'{year}-12-31'))
+                              VALUES ('bts_t100_domestic', datetime('now'), 'https://transtats.bts.gov/DL_SelectFields.aspx', ?, 0, ?, ?, NULL)''',
+                           (zp.name, f'{year}-01-01', f'{year}-12-31'))
         run_id = cur.lastrowid
 
         with conn:
             try:
-                n = ingest_zip(conn, zp, dataset, run_id)
+                n = ingest_zip(conn, zp, run_id)
             except Exception as e:
                 print(f'  FAIL {zp.name}: {e}', file=sys.stderr)
                 continue

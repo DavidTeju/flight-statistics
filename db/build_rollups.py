@@ -37,12 +37,12 @@ def main():
     print('rebuild enplanements_monthly_by_airport …', file=sys.stderr)
     conn.execute('DELETE FROM enplanements_monthly_by_airport')
     conn.execute(f'''
-        INSERT INTO enplanements_monthly_by_airport(year, month, airport_iata, passengers, dataset)
-        SELECT year, month, origin_iata, SUM(passengers), dataset
+        INSERT INTO enplanements_monthly_by_airport(year, month, airport_iata, passengers)
+        SELECT year, month, origin_iata, SUM(passengers)
         FROM   t100_segment
         WHERE  service_class IN ({','.join('?'*len(PASSENGER_CLASSES))})
           AND  aircraft_config = 1                  -- passenger config only
-        GROUP BY year, month, origin_iata, dataset
+        GROUP BY year, month, origin_iata
     ''', PASSENGER_CLASSES)
     n2 = conn.execute('SELECT COUNT(*) FROM enplanements_monthly_by_airport').fetchone()[0]
     print(f'  {n2:,} rows', file=sys.stderr)
@@ -69,20 +69,19 @@ def main():
     # 3) Enplanements monthly → apportion uniformly across days in the month
     #    (granularity=month_apportioned, is_estimated=1).
     cur = conn.execute('''
-        SELECT year, month, airport_iata, dataset, passengers
+        SELECT year, month, airport_iata, passengers
         FROM   enplanements_monthly_by_airport
     ''')
     batch = []
-    for year, month, iata, dataset, pax in cur:
+    for year, month, iata, pax in cur:
         days = calendar.monthrange(year, month)[1]
         per_day = pax // days
         remainder = pax - per_day * days
-        metric = 'enplanements_domestic' if dataset == 't100_domestic' else 'enplanements_intl'
         for d in range(1, days + 1):
             date = f'{year:04d}-{month:02d}-{d:02d}'
             # Spread the remainder across the first `remainder` days
             value = per_day + (1 if d <= remainder else 0)
-            batch.append((date, iata, metric, value, 'bts_t100', 'month_apportioned', 1))
+            batch.append((date, iata, 'enplanements_domestic', value, 'bts_t100', 'month_apportioned', 1))
     conn.executemany('''
         INSERT INTO airport_pax_daily(date, airport_iata, metric, passengers, source, granularity, is_estimated)
         VALUES (?,?,?,?,?,?,?)

@@ -57,14 +57,13 @@ export type TsaDailyNational = {
 // ─── BTS T-100 enplanements ───────────────────────────────────────────────
 
 // Native grain: carrier × origin × dest × aircraft × class × month.
-// Same shape for Domestic (28DS) and International (28IS) — distinguished by `dataset`.
+// Only the Domestic Segment (28DS) is loaded.
 export type T100Segment = {
 	year: number; // 2019..present
 	month: number; // 1..12
-	dataset: 't100_domestic' | 't100_international';
 
 	uniqueCarrier: string; // FK → Carrier.uniqueCarrier
-	carrierRegion: string; // 'D' domestic / 'I' international / 'A' atlantic etc.
+	carrierRegion: string; // 'D' domestic / 'A' atlantic etc.
 
 	originIata: string; // FK → Airport.iata (use dotAirportId for ranges)
 	originAirportId: number;
@@ -97,7 +96,6 @@ export type EnplanementsMonthlyByAirport = {
 	month: number;
 	airportIata: string;
 	passengers: number; // sum where Origin = airport, Class ∈ passenger classes
-	dataset: 't100_domestic' | 't100_international' | 't100_combined';
 };
 
 // ─── Unified fact (airport × day, metric-tagged) ──────────────────────────
@@ -107,7 +105,7 @@ export type EnplanementsMonthlyByAirport = {
 export type AirportPaxDaily = {
 	date: string; // 'YYYY-MM-DD'
 	airportIata: string; // FK → Airport.iata. Use '__US__' for national.
-	metric: 'tsa_throughput' | 'enplanements_domestic' | 'enplanements_intl';
+	metric: 'tsa_throughput' | 'enplanements_domestic';
 	passengers: number;
 	source: 'tsa_foia' | 'tsa_public' | 'bts_t100';
 	granularity: 'day' | 'month_apportioned';
@@ -118,7 +116,7 @@ export type AirportPaxDaily = {
 
 export type IngestRun = {
 	id: number;
-	source: 'tsa_public' | 'tsa_foia' | 'bts_t100_domestic' | 'bts_t100_international';
+	source: 'tsa_public' | 'tsa_foia' | 'bts_t100_domestic';
 	fetchedAt: string; // ISO timestamp
 	sourceUrl: string;
 	sourceFilename: string | null;

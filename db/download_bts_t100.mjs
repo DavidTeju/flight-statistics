@@ -21,15 +21,11 @@ const args = Object.fromEntries(
 const FROM = Number(args.from ?? 2019);
 const TO = Number(args.to ?? new Date().getUTCFullYear());
 
-// Two datasets to fetch
+// T-100 Domestic Segment (US Carriers).
 const DATASETS = [
 	{
 		key: 't100_domestic',
 		url: 'https://www.transtats.bts.gov/DL_SelectFields.aspx?gnoyr_VQ=FIM&QO_fu146_anzr=Nv4%20Pn44vr45'
-	},
-	{
-		key: 't100_international',
-		url: 'https://www.transtats.bts.gov/DL_SelectFields.aspx?gnoyr_VQ=FIL&QO_fu146_anzr=Nv4%20Pn44vr45'
 	}
 ];
 

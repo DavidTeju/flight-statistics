@@ -6,7 +6,7 @@ SQLite database (`flight_stats.sqlite`) seeded from two upstream sources:
 | ------------------------------------------------------------------------------------- | ------------------------------------------------------------ | -------------------- |
 | **TSA public passenger-volumes page**                                                 | 2019-01-01 → present (daily, national)                       | `tsa_daily_national` |
 | **TSA FOIA weekly throughput PDFs** (via Wayback Machine + tsa.gov FOIA reading room) | 2019-01-20 → present (weekly batches, hourly per-checkpoint) | `tsa_hourly`         |
-| **BTS T-100 Domestic Segment** (TranStats download form)                              | 2019-01 → 2026-02 (monthly, carrier × O/D × aircraft)        | `t100_segment`       |
+| **BTS T-100 Domestic Segment, U.S. Carriers** (TranStats download form)               | 2019-01 → 2026-02 (monthly, carrier × O/D × aircraft)        | `t100_segment`       |
 
 ## Layout
 
@@ -62,10 +62,8 @@ matching TypeScript types.
   screenings the public counter rolls in).
 - `tsa_daily_national` — daily totals from the public TSA page. Includes
   pre-FOIA history that the per-checkpoint data doesn't cover.
-- `t100_segment` — BTS T-100 raw segment rows. **Domestic** dataset only at
-  present (`dataset='t100_domestic'`). International is plumbed in the schema
-  but the BTS download form has a different URL pattern for that subject that
-  the loader doesn't yet wire up.
+- `t100_segment` — BTS T-100 raw segment rows. **Domestic Segment (U.S.
+  Carriers)** only — international flights are out of scope for this project.
 - `enplanements_monthly_by_airport` — rollup: passengers by origin airport
   and month, filtered to passenger-class service (`F,L,A,C,E,P`) and
   passenger aircraft configuration (`aircraft_config=1`).
@@ -78,12 +76,9 @@ is_estimated=1`) for queryability; do not trust per-day values from this
 
 ## Known gaps / caveats
 
-- `t100_segment` only contains the **U.S. Carriers** subset of the Domestic
-  dataset (this is what BTS exposes under the standard download). Foreign
-  carriers operating in U.S. airspace and U.S. carrier international segments
-  are not yet loaded. Add the "T-100 International Segment (All Carriers)"
-  dataset URL to `download_bts_t100.mjs` to extend.
-- TSA FOIA coverage has small gaps (~30 weeks total since 2019) where the
-  Wayback archive lost the PDF. See `ingest_run` for what's actually loaded.
+- International flights are deliberately out of scope. `t100_segment` covers
+  only the BTS T-100 Domestic Segment dataset (U.S. carriers, both endpoints
+  in the U.S./territories). Inbound/outbound international segments and
+  foreign carriers are not loaded.
 - The "TSA daily national" total is **~10–15% higher** than the sum of
   `tsa_hourly` across all checkpoints. The two are distinct reports.

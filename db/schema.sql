@@ -81,12 +81,10 @@ CREATE TABLE tsa_daily_national (
 
 -- ─── BTS T-100 enplanements ──────────────────────────────────────────────
 
--- Native segment grain. Domestic + International stored in one table,
--- discriminated by `dataset`. ~150k–300k rows per month nationwide.
+-- Native segment grain. Domestic Segment only. ~150k–300k rows per month.
 CREATE TABLE t100_segment (
     year                  INTEGER NOT NULL,
     month                 INTEGER NOT NULL CHECK (month BETWEEN 1 AND 12),
-    dataset               TEXT NOT NULL CHECK (dataset IN ('t100_domestic','t100_international')),
 
     unique_carrier        TEXT NOT NULL REFERENCES carrier(unique_carrier),
     carrier_region        TEXT NOT NULL,
@@ -131,8 +129,7 @@ CREATE TABLE enplanements_monthly_by_airport (
     month         INTEGER NOT NULL,
     airport_iata  TEXT NOT NULL REFERENCES airport(iata),
     passengers    INTEGER NOT NULL,
-    dataset       TEXT NOT NULL CHECK (dataset IN ('t100_domestic','t100_international','t100_combined')),
-    PRIMARY KEY (year, month, airport_iata, dataset)
+    PRIMARY KEY (year, month, airport_iata)
 );
 
 CREATE INDEX enplanements_airport_idx ON enplanements_monthly_by_airport(airport_iata, year, month);
@@ -146,8 +143,7 @@ CREATE TABLE airport_pax_daily (
     airport_iata    TEXT NOT NULL,                 -- '__US__' for national rollup
     metric          TEXT NOT NULL CHECK (metric IN (
                         'tsa_throughput',
-                        'enplanements_domestic',
-                        'enplanements_intl'
+                        'enplanements_domestic'
                     )),
     passengers      INTEGER NOT NULL,
     source          TEXT NOT NULL CHECK (source IN ('tsa_foia','tsa_public','bts_t100')),
@@ -164,8 +160,7 @@ CREATE INDEX airport_pax_daily_metric_idx  ON airport_pax_daily(metric, date);
 CREATE TABLE ingest_run (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
     source            TEXT NOT NULL CHECK (source IN (
-                          'tsa_public','tsa_foia',
-                          'bts_t100_domestic','bts_t100_international'
+                          'tsa_public','tsa_foia','bts_t100_domestic'
                       )),
     fetched_at        TEXT NOT NULL,               -- ISO-8601
     source_url        TEXT NOT NULL,
@@ -189,9 +184,7 @@ CREATE VIEW v_airport_day_tsa AS
 SELECT date, airport_iata, pax_incl_kcm AS passengers
 FROM   tsa_daily_by_airport;
 
--- Airport-month combined enplanements.
+-- Airport-month enplanements (Domestic Segment).
 CREATE VIEW v_airport_month_enplanements AS
-SELECT year, month, airport_iata, SUM(passengers) AS passengers
-FROM   enplanements_monthly_by_airport
-WHERE  dataset != 't100_combined'
-GROUP BY year, month, airport_iata;
+SELECT year, month, airport_iata, passengers
+FROM   enplanements_monthly_by_airport;
