@@ -1,3 +1,5 @@
+I get unlimited free Delta flights but I fly standby so I wanted a way to view flight trends and book flights on less busy days
+
 # Flight Statistics
 
 A calendar heatmap + sliding weekly chart for TSA passenger volumes since 2019-01-01.
