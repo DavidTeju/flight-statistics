@@ -80,5 +80,29 @@ is_estimated=1`) for queryability; do not trust per-day values from this
   only the BTS T-100 Domestic Segment dataset (U.S. carriers, both endpoints
   in the U.S./territories). Inbound/outbound international segments and
   foreign carriers are not loaded.
+- Three TSA FOIA weeks (`2023-03-26 → 2023-04-01`, `2023-09-17 → 2023-09-23`,
+  `2023-09-24 → 2023-09-30`) are missing from `tsa_hourly` because the
+  archived PDFs in the Wayback Machine are truncated (~2–4 MB instead of the
+  usual ~6 MB) and `pdftotext` rejects them with an XRef error. Live tsa.gov
+  no longer hosts these (their FOIA reading room only retains ~45 weeks).
+  The `ingest_run` table records the failed attempts.
 - The "TSA daily national" total is **~10–15% higher** than the sum of
   `tsa_hourly` across all checkpoints. The two are distinct reports.
+
+## Parser
+
+`parse_tsa_pdf.py` is hybrid:
+
+- **2022+ "TSA Total Throughput"** PDFs go through a `pdftotext -layout`
+  column-slicing path — fast (~5 s/PDF, ~50 MB RSS).
+- **2019–2021 "TSA Throughput / PMIS"** PDFs go through pdfplumber
+  (`page.extract_tables`) — slower (~3 min/PDF, ~90 MB RSS) but handles the
+  multi-line cells (wrapped dates like `10/11/202\n0`) that defeat pure
+  column slicing.
+
+**Header-poisoning bug (fixed)**: the page-header line "TSA Total Throughput"
+slices into the airport column on every page. The string "TSA" matched the
+`^[A-Z0-9]{3}` IATA regex, silently poisoning `carry.iata` until the next
+real airport row. The fix moves all `carry.*` updates after the row has been
+validated as a data row (has a non-header `Checkpoint` cell and a valid
+integer `pax` value). Affected PDFs were re-parsed by `db/fix_tsa_bug.py`.
