@@ -1,0 +1,22 @@
+node_modules
+/.svelte-kit
+/build
+/dist
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+
+# Python virtualenv and bytecode caches
+db/.venv/
+**/__pycache__/
+
+# Local SQLite database and WAL/SHM sidecars
+db/*.sqlite
+db/*.sqlite-shm
+db/*.sqlite-wal
+
+# Downloaded raw source data (BTS T-100 CSVs, TSA FOIA PDFs, etc.)
+db/cache/
+db/data/

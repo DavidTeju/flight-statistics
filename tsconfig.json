@@ -1,0 +1,3 @@
+{
+	"extends": ["@davidteju/dev-config/tsconfig/svelte", "./.svelte-kit/tsconfig.json"]
+}
