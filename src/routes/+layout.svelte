@@ -47,6 +47,7 @@
 
 	<footer class="footnote">
 		<span class="mono">data · TSA.gov · passenger volumes · refreshed manually</span>
+		<a class="mono source" href="https://github.com/DavidTeju/flight-statistics" target="_blank" rel="noopener noreferrer">source · github</a>
 	</footer>
 </div>
 
@@ -114,12 +115,29 @@
 	}
 
 	.footnote {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
 		padding: 8px 32px;
 		border-top: 1px solid var(--rule);
 		color: var(--ink-faint);
 		font-size: 11px;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
+	}
+
+	.source {
+		color: var(--ink-faint);
+		text-decoration: none;
+		border-bottom: 1px solid transparent;
+		transition: color 120ms, border-color 120ms;
+	}
+
+	.source:hover,
+	.source:focus-visible {
+		color: var(--ink);
+		border-bottom-color: var(--rule);
 	}
 
 	@media (max-width: 720px) {
