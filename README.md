@@ -2,6 +2,8 @@ I get unlimited free Delta flights but I fly standby so I wanted a way to view f
 
 # Flight Statistics
 
+Live at <https://whentofly.app/>
+
 A calendar heatmap + sliding weekly chart for TSA passenger volumes since 2019-01-01.
 
 Built with SvelteKit + TypeScript. No charting library — every pixel is hand-drawn SVG so the aesthetic stays cohesive end to end.
